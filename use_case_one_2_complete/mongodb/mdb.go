@@ -131,7 +131,7 @@ func (m *MDBType) CreateEncryptedClient(schema map[string]interface{}) error {
 		KmsProviders:      m.keyProvider,
 		SchemaMap:         schema,
 		TLSConfig:         m.keyProviderTLSOptions,
-		ExtraOptions:      map[string]interface{}{"mongocryptdSpawnPath": m.cryptSharedPath},
+		ExtraOptions:      map[string]interface{}{"cryptSharedLibPath": m.cryptSharedPath, "cryptSharedLibRequired": true},
 	}
 
 	err := m.createClient(&autoEncryptionOpts)
