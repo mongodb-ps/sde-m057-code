@@ -27,28 +27,27 @@ type MDBType struct {
 }
 
 func NewMDB(
-	c string,
-	u string,
-	p string,
+	connectionString string,
+	username string,
+	password string,
 	caFile string,
-	kp map[string]map[string]interface{},
-	kns string,
+	keyProvider map[string]map[string]interface{},
+	keyVaultNameSpace string,
 	tlsOps map[string]*tls.Config,
 ) (*MDBType, error) {
-	var err error
 	mdb := MDBType{
 		client:                nil,
 		clientEncryption:      nil,
-		connectionString:      c,
-		username:              u,
-		password:              p,
+		connectionString:      connectionString,
+		username:              username,
+		password:              password,
 		caFile:                caFile,
-		keyProvider:           kp,
-		keyVaultNameSpace:     kns,
+		keyProvider:           keyProvider,
+		keyVaultNameSpace:     keyVaultNameSpace,
 		keyProviderTLSOptions: tlsOps,
 	}
 
-	err = mdb.createClient()
+	err := mdb.createClient()
 	if err != nil {
 		return nil, err
 	}

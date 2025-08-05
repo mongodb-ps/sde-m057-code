@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -26,32 +25,29 @@ type MDBType struct {
 	keyVaultNameSpace     string
 	keyProviderTLSOptions map[string]*tls.Config
 	cryptSharedPath       string
-	ctx                   context.Context
 }
 
 func NewMDB(
-	c string,
-	u string,
-	p string,
+	connectionString string,
+	username string,
+	password string,
 	caFile string,
 	kp map[string]map[string]interface{},
 	kns string,
 	tlsOps map[string]*tls.Config,
 	csp string,
 ) (*MDBType, error) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	mdb := MDBType{
 		client:                nil,
 		clientEncryption:      nil,
-		connectionString:      c,
-		username:              u,
-		password:              p,
+		connectionString:      connectionString,
+		username:              username,
+		password:              password,
 		caFile:                caFile,
 		keyProvider:           kp,
 		keyVaultNameSpace:     kns,
 		keyProviderTLSOptions: tlsOps,
 		cryptSharedPath:       csp,
-		ctx:                   ctx,
 	}
 	var o *options.AutoEncryptionOptions
 
@@ -92,11 +88,6 @@ func (m *MDBType) createClient(autoEncryptionOpts *options.AutoEncryptionOptions
 		if err != nil {
 			return err
 		}
-		/*defer func() {
-			if err = m.client.Disconnect(m.ctx); err != nil {
-				log.Panic(err)
-			}
-		}()*/
 		err = m.client.Ping(context.Background(), nil)
 		if err != nil {
 			return err
@@ -107,11 +98,6 @@ func (m *MDBType) createClient(autoEncryptionOpts *options.AutoEncryptionOptions
 		if err != nil {
 			return err
 		}
-		/*defer func() {
-			if err = m.encryptedClient.Disconnect(m.ctx); err != nil {
-				log.Panic(err)
-			}
-		}()*/
 		err = m.encryptedClient.Ping(context.Background(), nil)
 		if err != nil {
 			return err

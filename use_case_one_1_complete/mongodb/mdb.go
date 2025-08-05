@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -27,38 +26,35 @@ type MDBType struct {
 	keyVaultNameSpace     string
 	keyProviderTLSOptions map[string]*tls.Config
 	cryptSharedPath       string
-	ctx                   context.Context
 }
 
 func NewMDB(
-	c string,
-	u string,
-	p string,
+	connectionString string,
+	username string,
+	password string,
 	caFile string,
-	kpn string,
-	kp map[string]map[string]interface{},
-	kns string,
+	keyProviderName string,
+	keyProvider map[string]map[string]interface{},
+	keyVaultNameSpace string,
 	tlsOps map[string]*tls.Config,
 	csp string,
 ) (*MDBType, error) {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	mdb := MDBType{
 		client:                nil,
 		clientEncryption:      nil,
-		connectionString:      c,
-		username:              u,
-		password:              p,
+		connectionString:      connectionString,
+		username:              username,
+		password:              password,
 		caFile:                caFile,
-		keyProviderName:       kpn,
-		keyProvider:           kp,
-		keyVaultNameSpace:     kns,
+		keyProviderName:       keyProviderName,
+		keyProvider:           keyProvider,
+		keyVaultNameSpace:     keyVaultNameSpace,
 		keyProviderTLSOptions: tlsOps,
 		cryptSharedPath:       csp,
-		ctx:                   ctx,
 	}
-	var o *options.AutoEncryptionOptions
+	var opts *options.AutoEncryptionOptions
 
-	err := mdb.createClient(o)
+	err := mdb.createClient(opts)
 	if err != nil {
 		return nil, err
 	}
