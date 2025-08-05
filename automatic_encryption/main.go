@@ -121,19 +121,20 @@ func main() {
 		},
 		"properties": {
 			"name": {
-				 "bsonType": "object",
-				 "properties": {
-					 "firstName": {
-						 "encrypt": {
-							 "bsonType": "string",
-							 "algorithm": "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
-						 }
-					 },
-					 <UPDATE_HERE>
-						// PUT MORE FIELDS IN HERE
+				"bsonType": "object",
+				"properties": {
+					"firstName": {
+						"encrypt": {
+						 "bsonType": "string",
+						 "algorithm": "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+						},
 					},
 					<UPDATE_HERE>
-		// PUT THE REST OF YOUR SCHEMA MAP CODE HERE
+						// PUT MORE FIELDS IN HERE
+				},
+			},
+			// PUT THE REST OF YOUR SCHEMA MAP CODE HERE
+		},
 	}`
 
 	// Auto Encryption Client
