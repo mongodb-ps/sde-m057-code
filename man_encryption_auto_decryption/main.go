@@ -42,7 +42,7 @@ func createClient(c string, u string, p string, caFile string) (*mongo.Client, e
 	if err != nil {
 		return nil, err
 	}
-	err = client.Ping(context.Background(), nil)
+	err = client.Ping(context.TODO(), nil)
 	if err != nil {
 		return nil, err
 	}

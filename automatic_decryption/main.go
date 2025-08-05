@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+// NEVER hardcode credentials!
 func main() {
 	var (
 		keyVaultDB       = "__encryption"
@@ -215,7 +216,8 @@ func main() {
 	}
 	fmt.Printf("%+v\n", findResult)
 
-	// As per the excercise attempt to query salary field
+	// The `salary` field is encrypted with a random algorithm, therefore we cannot query it.
+	// We should get an error from this query and we handle it appropriately in this case
 	findResult, err = mdb.EncryptedFindOne(encryptedDB, encryptedColl, bson.M{"salary": 999999.99})
 	if err != nil {
 		fmt.Printf("MongoDB find error: %s\n", err)

@@ -82,7 +82,7 @@ func (m *MDBType) createClient() error {
 	if err != nil {
 		return err
 	}
-	err = m.client.Ping(context.Background(), nil)
+	err = m.client.Ping(context.TODO(), nil)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (m *MDBType) EncryptField(dek bson.Binary, alg string, data interface{}) (b
 
 func (m *MDBType) GetDEKUUID(dek string) (bson.Binary, error) {
 	var dekFindResult bson.M
-	err := m.clientEncryption.GetKeyByAltName(context.Background(), dek).Decode(&dekFindResult)
+	err := m.clientEncryption.GetKeyByAltName(context.TODO(), dek).Decode(&dekFindResult)
 	if err != nil {
 		return bson.Binary{}, err
 	}

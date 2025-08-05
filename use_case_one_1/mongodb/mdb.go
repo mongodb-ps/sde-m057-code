@@ -52,9 +52,9 @@ func NewMDB(
 		keyProviderTLSOptions: tlsOps,
 		cryptSharedPath:       csp,
 	}
-	var o *options.AutoEncryptionOptions
+	var opts *options.AutoEncryptionOptions
 
-	err := mdb.createClient(o)
+	err := mdb.createClient(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (m *MDBType) createClient(autoEncryptionOpts *options.AutoEncryptionOptions
 				log.Panic(err)
 			}
 		}()*/
-		err = m.client.Ping(context.Background(), nil)
+		err = m.client.Ping(context.TODO(), nil)
 		if err != nil {
 			return err
 		}
@@ -111,7 +111,7 @@ func (m *MDBType) createClient(autoEncryptionOpts *options.AutoEncryptionOptions
 				log.Panic(err)
 			}
 		}()*/
-		err = m.encryptedClient.Ping(context.Background(), nil)
+		err = m.encryptedClient.Ping(context.TODO(), nil)
 		if err != nil {
 			return err
 		}
@@ -219,7 +219,7 @@ func (m *MDBType) traverseBson(d bson.M) (bson.M, error) {
 
 func (m *MDBType) GetDEKUUID(dek string) (bson.Binary, error) {
 	var dekFindResult bson.M
-	err := m.clientEncryption.GetKeyByAltName(context.Background(), dek).Decode(&dekFindResult)
+	err := m.clientEncryption.GetKeyByAltName(context.TODO(), dek).Decode(&dekFindResult)
 	if err != nil {
 		return bson.Binary{}, err
 	}
@@ -256,7 +256,7 @@ func (m *MDBType) EncryptedInsertOne(db string, coll string, data interface{}) (
 func (m *MDBType) FindOne(db string, coll string, filter bson.M) (bson.M, error) {
 	c := m.client.Database(db).Collection(coll)
 	var findResult bson.M
-	err := c.FindOne(context.Background(), filter).Decode(&findResult)
+	err := c.FindOne(context.TODO(), filter).Decode(&findResult)
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func (m *MDBType) FindOne(db string, coll string, filter bson.M) (bson.M, error)
 func (m *MDBType) EncryptedFindOne(db string, coll string, filter bson.M) (bson.M, error) {
 	c := m.encryptedClient.Database(db).Collection(coll)
 	var findResult bson.M
-	err := c.FindOne(context.Background(), filter).Decode(&findResult)
+	err := c.FindOne(context.TODO(), filter).Decode(&findResult)
 	if err != nil {
 		return nil, err
 	}
