@@ -18,166 +18,35 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-func createClient(c string, u string, p string, caFile string) (*mongo.Client, error) {
-	//auth setup
-	creds := options.Credential{
-		Username:      u,
-		Password:      p,
-		AuthMechanism: "SCRAM-SHA-256",
-	}
-
-	// TLS setup
-	caCert, err := os.ReadFile(caFile)
-	if err != nil {
-		return nil, err
-	}
-	caCertPool := x509.NewCertPool()
-	if ok := caCertPool.AppendCertsFromPEM(caCert); !ok {
-		return nil, fmt.Errorf("failed to append CA certificate")
-	}
-
-	tlsConfig := &tls.Config{
-		RootCAs: caCertPool,
-	}
-
-	// instantiate client
-	opts := options.Client().ApplyURI(c).SetAuth(creds).SetTLSConfig(tlsConfig)
-	client, err := mongo.Connect(context.TODO(), opts)
-	if err != nil {
-		return nil, err
-	}
-	err = client.Ping(context.Background(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
-}
-
-func createAutoEncryptionClient(c string, u string, p string, caFile string, ns string, kms map[string]map[string]interface{}, tlsOps map[string]*tls.Config, s bson.M) (*mongo.Client, error) { //auth setup
-	creds := options.Credential{
-		Username:      u,
-		Password:      p,
-		AuthMechanism: "SCRAM-SHA-256",
-	}
-
-	// TLS setup
-	caCert, err := os.ReadFile(caFile)
-	if err != nil {
-		return nil, err
-	}
-	caCertPool := x509.NewCertPool()
-	if ok := caCertPool.AppendCertsFromPEM(caCert); !ok {
-		return nil, fmt.Errorf("failed to append CA certificate")
-	}
-
-	tlsConfig := &tls.Config{
-		RootCAs: caCertPool,
-	}
-
-	autoEncryptionOpts := options.AutoEncryption().
-		SetKeyVaultNamespace(ns).
-		SetKmsProviders(kms).
-		SetSchemaMap(s).
-		SetTLSConfig(tlsOps)
-
-	client, err := mongo.Connect(
-		context.TODO(),
-		options.Client().ApplyURI(c).SetAutoEncryptionOptions(autoEncryptionOpts).SetAuth(creds).SetTLSConfig(tlsConfig),
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
-}
-
-func createManualEncryptionClient(c *mongo.Client, kp map[string]map[string]interface{}, kns string, tlsOps map[string]*tls.Config) (*mongo.ClientEncryption, error) {
-	o := options.ClientEncryption().SetKeyVaultNamespace(kns).SetKmsProviders(kp).SetTLSConfig(tlsOps)
-	client, err := mongo.NewClientEncryption(c, o)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
-}
-
-func createDEK(c *mongo.ClientEncryption, kn string, cmk map[string]interface{}, altName string) (Binary, error) {
-	var (
-		dek Binary
-		err error
-	)
-
-	cOpts := options.DataKey().
-		SetMasterKey(cmk).
-		SetKeyAltNames([]string{altName})
-	dek, err = c.CreateDataKey(context.TODO(), kn, cOpts)
-	if err != nil {
-		return Binary{}, err
-	}
-
-	return dek, nil
-}
-
-func getDEK(c *mongo.ClientEncryption, altName string) (Binary, error) {
-	var dekFindResult bson.M
-
-	err := c.GetKeyByAltName(context.TODO(), altName).Decode(&dekFindResult)
-	if err != nil {
-		return Binary{}, err
-	}
-	if len(dekFindResult) == 0 {
-		return Binary{}, nil
-	}
-	b, ok := dekFindResult["_id"].(Binary)
-	if !ok {
-		return Binary{}, errors.New("the DEK conversion error")
-	}
-	return b, nil
-}
-
-func nameGenerator()(string, string) {
-	seed := time.Now().UTC().UnixNano()
-	nameGenerator := namegenerator.NewNameGenerator(seed)
-
-	name := nameGenerator.Generate()
-
-	firstName := strings.Split(name, "-")[0]
-	lastName := strings.Split(name, "-")[1]
-
-	return firstName, lastName
-}
-
+// NEVER hardcode credentials!
 func main() {
 	var (
 		caFile           = "/data/pki/ca.pem"
 		username         = "app_user"
-		password         = <UPDATE_HERE>
-		client           *mongo.Client
-		encryptedClient  *mongo.Client
-		clientEncryption *mongo.ClientEncryption
+		password         = "SuperP@ssword123!"
+		kmipEndpoint     = "kmip-0:5696"
+		cryptSharedPath  = "/data/lib/mongo_crypt_v1.so"
 		connectionString = "mongodb://mongodb-0:27017/?replicaSet=rs0&tls=true"
-		dek              Binary
-		encryptedClient  *mongo.Client
-		err							 error
+		err              error
 		exitCode         = 0
-		findResult			 bson.M
-		keyVaultColl 		 = "__keyVault"
-		keyVaultDB 			 = "__encryption"
-		
+		dek              bson.Binary
+		findResult       bson.M
+		keyVaultColl     = "__keyVault"
+		keyVaultDB       = "__encryption"
 		kmipTLSConfig    *tls.Config
 		result           *mongo.InsertOneResult
+		encryptedDB      = "companyData"
+		encryptedColl    = "employee"
 	)
 
 	defer func() {
 		os.Exit(exitCode)
 	}()
 
-	provider := "kmip"
+	providerName := "kmip"
 	kmsProvider := map[string]map[string]interface{}{
-		provider: {
-			"endpoint": <UPDATE_HERE>,
+		providerName: {
+			"endpoint": kmipEndpoint,
 		},
 	}
 	cmk := map[string]interface{}{

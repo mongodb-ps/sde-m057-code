@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+// NEVER hardcode credentials!
 func main() {
 	var (
 		keyVaultDB       = "__encryption"

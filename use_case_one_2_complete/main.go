@@ -18,6 +18,7 @@ import (
 )
 import "encoding/base64"
 
+// NEVER hardcode credentials!
 func main() {
 	var (
 		caFile           = "/data/pki/ca.pem"

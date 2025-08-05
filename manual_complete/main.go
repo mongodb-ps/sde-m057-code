@@ -15,6 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+// NEVER hardcode credentials!
 func main() {
 	var (
 		keyVaultDB       = "__encryption"
@@ -30,9 +31,6 @@ func main() {
 		kmipTLSConfig    *tls.Config
 		result           *mongo.InsertOneResult
 		dek              bson.Binary
-		encryptedName    bson.Binary
-		findResult       bson.M
-		outputData       bson.M
 		err              error
 		encryptedDB      = "companyData"
 		encryptedColl    = "employee"
