@@ -2,21 +2,21 @@ package main
 
 import (
 	"C"
-	"context"
 	"crypto/tls"
-	"crypto/x509"
-	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"os"
-	"strings"
+	"strconv"
 	"time"
 
-	"github.com/goombaio/namegenerator"
-	"go.mongodb.org/mongo-driver/v2/bson"
+	mdb "sde/csfle/mongodb"
+	utils "sde/csfle/utils"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
+import "encoding/base64"
 
 // NEVER hardcode credentials!
 func main() {
@@ -54,17 +54,10 @@ func main() {
 	}
 	keySpace := keyVaultDB + "." + keyVaultColl
 
-	client, err = createClient(connectionString, username, password, caFile)
-	if err != nil {
-		fmt.Printf("MDB client error: %s\n", err)
-		exitCode = 1
-		return
-	}
-
 	// Set the KMIP TLS options
 	kmsTLSOptions := make(map[string]*tls.Config)
 	tlsOptions := map[string]interface{}{
-		"tlsCAFile": "/data/pki/ca.pem",
+		"tlsCAFile":             "/data/pki/ca.pem",
 		"tlsCertificateKeyFile": "/data/pki/client-0.pem",
 	}
 	kmipTLSConfig, err = options.BuildTLSConfig(tlsOptions)
@@ -74,8 +67,15 @@ func main() {
 		return
 	}
 	kmsTLSOptions["kmip"] = kmipTLSConfig
-	
-	clientEncryption, err = createManualEncryptionClient(client, username, password, caFile, kmsProvider, keySpace, kmsTLSOptions)
+
+	mdb, err := mdb.NewMDB(connectionString, username, password, caFile, providerName, kmsProvider, keySpace, kmsTLSOptions, cryptSharedPath)
+	if err != nil {
+		fmt.Printf("ClientEncrypt error: %s\n", err)
+		exitCode = 1
+		return
+	}
+
+	err = mdb.CreateManualEncryptionClient()
 	if err != nil {
 		fmt.Printf("ClientEncrypt error: %s\n", err)
 		exitCode = 1
@@ -86,10 +86,10 @@ func main() {
 	id := strconv.Itoa(int(rand.Intn(100000)))
 
 	// get our employee DEK or create
-	_, err = getDEK(clientEncryption, id)
+	_, err = mdb.GetDEK(id)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			_, err = createDEK(clientEncryption, provider, cmk, id)
+			_, err = mdb.CreateDEK(cmk, id)
 			if err != nil {
 				fmt.Printf("Cannot create employee DEK: %s\n", err)
 				exitCode = 1
@@ -101,39 +101,36 @@ func main() {
 			return
 		}
 	}
-	
-	firstname, lastname := utils.NameGenerator()
-  payload := bson.M{
-		"_id": id,
-    "name": bson.M{
-      "firstName": firstname,
-      "lastName": lastname,
-      "otherNames": nil,
-    },
-    "address": bson.M{
-      "streetAddress": "29 Bson Street",
-      "suburbCounty": "Mongoville",
-      "stateProvince": "Victoria",
-      "zipPostcode": "3999",
-      "country": "Oz",
-    },
-    "dob": time.Date(1999, 1, 12, 0, 0, 0, 0, time.Local),
-    "phoneNumber": "1800MONGO",
-    "salary": 999999.99,
-    "taxIdentifier": "78SDSSWN001",
-    "role": []string{"Student"},
-  }
 
-	// Retrieve our DEK
-	dek, err = getDEK(clientEncryption, "dataKey1")
-	if err != nil {
+	firstname, lastname := utils.NameGenerator()
+	payload := bson.M{
+		"_id": id,
+		"name": bson.M{
+			"firstName":  firstname,
+			"lastName":   lastname,
+			"otherNames": nil,
+		},
+		"address": bson.M{
+			"streetAddress": "29 Bson Street",
+			"suburbCounty":  "Mongoville",
+			"stateProvince": "Victoria",
+			"zipPostcode":   "3999",
+			"country":       "Oz",
+		},
+		"dob":           time.Date(1999, 1, 12, 0, 0, 0, 0, time.Local),
+		"phoneNumber":   "1800MONGO",
+		"salary":        999999.99,
+		"taxIdentifier": "78SDSSWN001",
+		"role":          []string{"Student"},
+	}
+
+	// Retrieve our DEK or fail if missing
+	dek, err = mdb.GetDEKUUID("dataKey1")
+	if err != nil || dek.Data == nil {
 		fmt.Printf("DEK find error: %s\n", err)
 		exitCode = 1
 		return
 	}
-
-	db := "companyData"
-	collection := "employee"
 	
 	schemaMap := `{
 		"bsonType": "object",
@@ -215,16 +212,15 @@ func main() {
 		fmt.Printf("Unmarshal Error: %s\n", err)
 	}
 	completeMap := map[string]interface{}{
-		db + "." + collection: testSchema,
+		encryptedDB + "." + encryptedColl: testSchema,
 	}
-	encryptedClient, err = createAutoEncryptionClient(connectionString, keySpace, kmsProvider, kmsTLSOptions, completeMap)
+
+	err = mdb.CreateEncryptedClient(completeMap)
 	if err != nil {
 		fmt.Printf("MDB encrypted client error: %s\n", err)
 		exitCode = 1
 		return
 	}
-
-	encryptedColl := encryptedClient.Database(db).Collection(collection)
 
 	// remove the otherNames field if it is nil
 	name := payload["name"].(bson.M)
@@ -233,15 +229,15 @@ func main() {
 		delete(name, "otherNames")
 	}
 
-	result, err = encryptedColl.InsertOne(context.TODO(), payload)
+	result, err = mdb.EncryptedInsertOne(encryptedDB, encryptedColl, payload)
 	if err != nil {
 		fmt.Printf("Insert error: %s\n", err)
 		exitCode = 1
 		return
 	}
-	fmt.Print(result.InsertedID)
+	fmt.Println(result.InsertedID)
 
-	err = encryptedColl.FindOne(context.TODO(), bson.M{"name.firstName": firstname}).Decode(&findResult)
+	findResult, err = mdb.EncryptedFindOne(encryptedDB, encryptedColl, bson.M{"name.firstName": firstname})
 	if err != nil {
 		fmt.Printf("MongoDB find error: %s\n", err)
 		exitCode = 1

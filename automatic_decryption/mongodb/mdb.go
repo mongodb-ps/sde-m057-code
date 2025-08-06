@@ -254,7 +254,7 @@ func (m *MDBType) FindOne(db string, coll string, filter bson.M) (bson.M, error)
 func (m *MDBType) EncryptedFindOne(db string, coll string, filter bson.M) (bson.M, error) {
 	c := m.encryptedClient.Database(db).Collection(coll)
 	var findResult bson.M
-	err := c.<UPDATE_HERE>.Decode(&findResult)
+	err := c.<UPDATE_HERE>.Decode(&findResult) //use a `context.TODO()` here in the correct method call
 	if err != nil {
 		return nil, err
 	}
