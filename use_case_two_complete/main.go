@@ -228,6 +228,7 @@ func main() {
 		delete(name, "otherNames")
 	}
 
+	fmt.Println("Inserting document with encrypted fields")
 	result, err = mdb.EncryptedInsertOne(encryptedDB, encryptedColl, payload)
 	if err != nil {
 		fmt.Printf("Insert error: %s\n", err)
@@ -236,6 +237,7 @@ func main() {
 	}
 	fmt.Println(result.InsertedID)
 
+	fmt.Println("Retrieving document with encrypted fields")
 	findResult, err = mdb.EncryptedFindOne(encryptedDB, encryptedColl, bson.M{"name.firstName": firstname})
 	if err != nil {
 		fmt.Printf("MongoDB find error: %s\n", err)
@@ -249,11 +251,13 @@ func main() {
 	}
 	fmt.Printf("%+v\n", findResult)
 
+	fmt.Println("Deleting the employee DEK")
 	err = mdb.DeleteDEK(id)
 	if err != nil {
 		fmt.Printf("DEK deletion error: %s", err)
 	}
 
+	fmt.Println("Retrieving document with encrypted fields after DEK deletion")
 	findResult, err = mdb.EncryptedFindOne(encryptedDB, encryptedColl, bson.M{"name.firstName": firstname})
 	if err != nil {
 		fmt.Printf("MongoDB find error: %s\n", err)
@@ -267,9 +271,11 @@ func main() {
 	}
 	fmt.Printf("%+v\n", findResult)
 
+	fmt.Println("Waiting for DEK cache to expire")
 	// Sleep for 61 seconds
 	time.Sleep(61 * time.Second)
 
+	fmt.Println("Retrieving document with encrypted fields after DEK deletion and DEK cache expired")
 	findResult, err = mdb.EncryptedFindOne(encryptedDB, encryptedColl, bson.M{"name.firstName": firstname})
 	if err != nil {
 		fmt.Printf("MongoDB find error: %s\n", err)

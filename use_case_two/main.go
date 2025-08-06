@@ -274,6 +274,7 @@ func main() {
 	}
 	fmt.Printf("%+v\n", findResult)
 
+	fmt.Println("Waiting for DEK cache to expire")
 	// Sleep for 61 seconds
 	time.Sleep(61 * time.Second)
 
