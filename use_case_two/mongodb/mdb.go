@@ -302,7 +302,9 @@ func (m *MDBType) DeleteDEK(altName string) error {
 	if keyID.Data == nil {
 		return nil
 	}
-	delResult, err := m.clientEncryption.DeleteKey(context.TODO(), keyID)
+
+	// Put code here to delete the DEK using the ClientEncryption instance
+	delResult, err := m.clientEncryption.<UPDATE_HERE>(context.TODO(), keyID)
 	if err != nil {
 		return err
 	}

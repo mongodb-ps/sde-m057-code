@@ -236,7 +236,8 @@ func main() {
 	}
 	fmt.Println(result.InsertedID)
 
-	findResult, err = mdb.<UPDATE_HERE> // PUT CODE HERE TO RETRIEVE DOCUMENT using methods in the mdb instance
+	// Put code here to retrieve the document you just created using the methods in the mdb instance
+	findResult, err = mdb.<UPDATE_HERE>
 	if err != nil {
 		fmt.Printf("MongoDB find error: %s\n", err)
 		exitCode = 1
@@ -249,12 +250,14 @@ func main() {
 	}
 	fmt.Printf("%+v\n", findResult)
 
-	err = mdb.<UPDATE_HERE> // PUT CODE HERE TO DELETE the employee DEK using methods in the mdb instance
+	// Delete the employee DEK
+	err = mdb.DeleteDEK("dataKey1")
 	if err != nil {
 		fmt.Printf("DEK deletion error: %s", err)
 	}
 
-	findResult, err = mdb.<UPDATE_HERE> // PUT CODE HERE TO RETRIEVE DOCUMENT using methods in the mdb instance
+	// Put code here to once again retrieve the document you just created using the methods in the mdb instance
+	findResult, err = mdb.<UPDATE_HERE>
 	if err != nil {
 		fmt.Printf("MongoDB find error: %s\n", err)
 		exitCode = 1
@@ -270,7 +273,8 @@ func main() {
 	// Sleep for 61 seconds
 	time.Sleep(61 * time.Second)
 
-	findResult, err = mdb.<UPDATE_HERE> // PUT CODE HERE TO RETRIEVE DOCUMENT using methods in the mdb instance
+	// Put code here to once again retrieve the document you just created using the methods in the mdb instance
+	findResult, err = mdb.<UPDATE_HERE>
 	if err != nil {
 		fmt.Printf("MongoDB find error: %s\n", err)
 		exitCode = 1
