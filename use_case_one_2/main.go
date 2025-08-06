@@ -135,7 +135,7 @@ func main() {
 	schemaMap := `{
 		"bsonType": "object",
 		"encryptMetadata": {
-			"keyId": <UPDATE_HERE>,// put your JSON pointer here,
+			"keyId": <UPDATE_HERE>,// put your JSON pointer here (remove this comment as well),
 			"algorithm": "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
 		},
 		"properties": {
