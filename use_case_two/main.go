@@ -238,7 +238,7 @@ func main() {
 	fmt.Println(result.InsertedID)
 
 	fmt.Println("Retrieving document with encrypted fields")
-	// Put code here to retrieve the document you just created using the methods in the mdb instance
+	// Put code here to retrieve the document you just created using the methods in the mdb instance querying the `name.firstName` field
 	findResult, err = mdb.<UPDATE_HERE>
 	if err != nil {
 		fmt.Printf("MongoDB find error: %s\n", err)
@@ -260,7 +260,7 @@ func main() {
 	}
 
 	fmt.Println("Retrieving document with encrypted fields after DEK deletion")
-	// Put code here to once again retrieve the document you just created using the methods in the mdb instance
+	// Put code here to once again retrieve the document you just created using the methods in the mdb instance querying the `name.firstName` field
 	findResult, err = mdb.<UPDATE_HERE>
 	if err != nil {
 		fmt.Printf("MongoDB find error: %s\n", err)
@@ -278,7 +278,7 @@ func main() {
 	time.Sleep(61 * time.Second)
 
 	fmt.Println("Retrieving document with encrypted fields after DEK deletion and DEK cache expired")
-	// Put code here to once again retrieve the document you just created using the methods in the mdb instance
+	// Put code here to once again retrieve the document you just created using the methods in the mdb instance querying the `name.firstName` field
 	findResult, err = mdb.<UPDATE_HERE>
 	if err != nil {
 		fmt.Printf("MongoDB find error: %s\n", err)
